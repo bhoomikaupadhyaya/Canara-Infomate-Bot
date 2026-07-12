@@ -1,4 +1,5 @@
-# 🎓 Canara Infomate
+# 🎓 Canara Infomate Bot
+
 
 An intelligent virtual assistant for **Canara Engineering College** that streamlines access to academic, admission, placement, and campus information through a conversational interface.
 
