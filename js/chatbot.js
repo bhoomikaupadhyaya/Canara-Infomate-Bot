@@ -239,3 +239,118 @@ ${source.title || source.uri}
 `;
 
     }
+        addEventListeners() {
+
+        document
+            .getElementById("cec-chat-toggle")
+            ?.addEventListener("click", () => this.toggleChat(true));
+
+        document
+            .getElementById("cec-chat-close")
+            ?.addEventListener("click", () => this.toggleChat(false));
+
+        document
+            .getElementById("cec-chat-send")
+            ?.addEventListener("click", () => this.handleSend());
+
+        document
+            .getElementById("cec-chat-input")
+            ?.addEventListener("keydown", (e) => {
+
+                if (e.key === "Enter") {
+                    this.handleSend();
+                }
+
+            });
+
+    }
+
+
+    toggleChat(isOpen) {
+
+        this.isOpen = isOpen;
+
+        this.render();
+
+        if (isOpen) {
+
+            document
+                .getElementById("cec-chat-input")
+                ?.focus();
+
+        }
+
+    }
+
+
+    handleSend() {
+
+        const input = document.getElementById("cec-chat-input");
+
+        const text = input.value.trim();
+
+        if (!text)
+            return;
+
+        this.addMessage(text, "user");
+
+        input.value = "";
+
+        this.showTyping(true);
+
+        this.getBotResponse(text);
+
+    }
+
+
+    addMessage(text, sender, sources = null) {
+
+        this.messages.push({
+            text,
+            sender,
+            sources
+        });
+
+        const messageContainer =
+            document.getElementById("cec-chat-messages");
+
+        if (messageContainer) {
+
+            messageContainer.innerHTML =
+                this.renderMessages();
+
+            this.scrollToBottom();
+
+        }
+
+    }
+
+
+    showTyping(isTyping) {
+
+        const indicator =
+            document.getElementById("cec-typing-indicator");
+
+        if (!indicator)
+            return;
+
+        indicator.classList.toggle(
+            "hidden",
+            !isTyping
+        );
+
+    }
+
+
+    scrollToBottom() {
+
+        const container =
+            document.getElementById("cec-chat-messages");
+
+        if (!container)
+            return;
+
+        container.scrollTop =
+            container.scrollHeight;
+
+    }
