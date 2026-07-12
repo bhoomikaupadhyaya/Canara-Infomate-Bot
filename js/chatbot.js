@@ -354,3 +354,209 @@ ${source.title || source.uri}
             container.scrollHeight;
 
     }
+        async getBotResponse(userQuery) {
+
+        if (!GEMINI_API_KEY) {
+
+            this.addMessage(
+                "API key not configured. Please add your Gemini API key.",
+                "bot"
+            );
+
+            this.showTyping(false);
+
+            return;
+        }
+
+        const groundedQuery =
+            `${userQuery} Canara Engineering College ${COLLEGE_SITE_DOMAIN}`;
+
+        const payload = {
+
+            contents: [
+                {
+                    parts: [
+                        {
+                            text: groundedQuery
+                        }
+                    ]
+                }
+            ],
+
+            tools: [
+                {
+                    google_search: {}
+                }
+            ],
+
+            systemInstruction: {
+                parts: [
+                    {
+                        text: SYSTEM_PROMPT
+                    }
+                ]
+            }
+
+        };
+
+        try {
+
+            const response = await this.fetchWithBackoff(
+                API_URL,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+
+                    body: JSON.stringify(payload)
+                }
+            );
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `API Error : ${response.statusText}`
+                );
+
+            }
+
+            const result = await response.json();
+
+            const candidate = result.candidates?.[0];
+
+            const text =
+                candidate?.content?.parts?.[0]?.text;
+
+            let sources = [];
+
+            const grounding =
+                candidate?.groundingMetadata;
+
+            if (
+                grounding &&
+                grounding.groundingAttributions
+            ) {
+
+                sources =
+                    grounding.groundingAttributions
+                        .map(attr => ({
+                            uri: attr.web?.uri,
+                            title: attr.web?.title
+                        }))
+                        .filter(source =>
+                            source.uri &&
+                            source.uri.includes(
+                                COLLEGE_SITE_DOMAIN
+                            )
+                        );
+
+            }
+
+            if (text) {
+
+                this.addMessage(
+                    text,
+                    "bot",
+                    sources
+                );
+
+            } else {
+
+                this.addMessage(
+                    "Sorry, I couldn't generate a response.",
+                    "bot"
+                );
+
+            }
+
+        }
+        catch (error) {
+
+            console.error(error);
+
+            this.addMessage(
+                "Sorry, I'm having trouble connecting right now. Please try again later.",
+                "bot"
+            );
+
+        }
+        finally {
+
+            this.showTyping(false);
+
+        }
+
+    }
+
+
+
+    async fetchWithBackoff(
+        url,
+        options,
+        maxRetries = 5
+    ) {
+
+        let delay = 1000;
+
+        for (
+            let i = 0;
+            i < maxRetries;
+            i++
+        ) {
+
+            try {
+
+                const response =
+                    await fetch(url, options);
+
+                if (
+                    !response.ok &&
+                    i < maxRetries - 1
+                ) {
+
+                    if (
+                        response.status >= 400 &&
+                        response.status < 500
+                    ) {
+
+                        break;
+
+                    }
+
+                    throw new Error(
+                        response.statusText
+                    );
+
+                }
+
+                return response;
+
+            }
+            catch (error) {
+
+                if (i < maxRetries - 1) {
+
+                    await new Promise(resolve =>
+                        setTimeout(resolve, delay)
+                    );
+
+                    delay *= 2;
+
+                }
+                else {
+
+                    throw error;
+
+                }
+
+            }
+
+        }
+
+    }
+
+}
+
+export default ChatbotWidget;
