@@ -39,6 +39,5 @@ Do not provide information from your general knowledge if it's not in the search
 Start the conversation with a friendly greeting and ask how you can help.
 `;
 
-// Gemini API URL
 export const API_URL =
-`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
+`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`;
